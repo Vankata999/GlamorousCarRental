@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { priceFor, toUTCDay } from "@/lib/pricing";
+import { overlapWhere } from "@/lib/availability";
 
 export type BookResult =
   | { ok: true; price: number }
@@ -44,7 +45,7 @@ export async function createReservation(
       if (!car) throw new Error("CAR_NOT_FOUND");
 
       const clash = await tx.reservation.findFirst({
-        where: { carId, startDate: { lte: end }, endDate: { gte: start } },
+        where: { carId, ...overlapWhere(start, end) },
         select: { id: true },
       });
       if (clash) throw new Error("CONFLICT");
@@ -52,7 +53,7 @@ export async function createReservation(
       // A person can only rent one car at a time: reject if this user already
       // has any reservation overlapping the requested range.
       const userClash = await tx.reservation.findFirst({
-        where: { userId, startDate: { lte: end }, endDate: { gte: start } },
+        where: { userId, ...overlapWhere(start, end) },
         select: { id: true },
       });
       if (userClash) throw new Error("USER_CONFLICT");
