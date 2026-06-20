@@ -40,9 +40,9 @@ export default async function HomePage() {
         <p className="text-gray-500">No cars available right now.</p>
       ) : (
         <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {cars.map((car) => (
+          {cars.map((car, i) => (
             <li key={car.id}>
-              <CarCard car={car} />
+              <CarCard car={car} priority={i < 3} />
             </li>
           ))}
         </ul>

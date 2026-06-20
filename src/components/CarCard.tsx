@@ -11,7 +11,13 @@ export type CarWithReservations = {
   reservations: { startDate: Date; endDate: Date }[];
 };
 
-export function CarCard({ car }: { car: CarWithReservations }) {
+export function CarCard({
+  car,
+  priority = false,
+}: {
+  car: CarWithReservations;
+  priority?: boolean;
+}) {
   // Existing bookings as plain calendar-day strings for the client calendar.
   const bookedRanges = car.reservations.map((r) => ({
     from: dayKey(r.startDate),
@@ -25,6 +31,7 @@ export function CarCard({ car }: { car: CarWithReservations }) {
           src={car.imageUrl}
           alt={`${car.model} (${car.year})`}
           fill
+          priority={priority}
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="object-cover"
         />
