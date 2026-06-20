@@ -14,15 +14,21 @@ export type CarWithReservations = {
 export function CarCard({
   car,
   priority = false,
+  userBusyRanges = [],
 }: {
   car: CarWithReservations;
   priority?: boolean;
+  userBusyRanges?: { from: string; to: string }[];
 }) {
-  // Existing bookings as plain calendar-day strings for the client calendar.
-  const bookedRanges = car.reservations.map((r) => ({
-    from: dayKey(r.startDate),
-    to: dayKey(r.endDate),
-  }));
+  // Days to disable in this car's calendar: the car's own bookings, plus the
+  // current user's bookings on any car (one person can't double-book themselves).
+  const bookedRanges = [
+    ...car.reservations.map((r) => ({
+      from: dayKey(r.startDate),
+      to: dayKey(r.endDate),
+    })),
+    ...userBusyRanges,
+  ];
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">

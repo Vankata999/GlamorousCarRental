@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { toUTCDay } from "@/lib/pricing";
+import { toUTCDay, dayKey } from "@/lib/pricing";
 import { CarCard } from "@/components/CarCard";
 
 export default async function HomePage() {
@@ -27,6 +27,17 @@ export default async function HomePage() {
     },
   });
 
+  // The current user's own upcoming bookings — disabled on every car so one
+  // person can't hold two reservations that overlap in time.
+  const myReservations = await db.reservation.findMany({
+    where: { userId: session.user.id, endDate: { gte: today } },
+    select: { startDate: true, endDate: true },
+  });
+  const userBusyRanges = myReservations.map((r) => ({
+    from: dayKey(r.startDate),
+    to: dayKey(r.endDate),
+  }));
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="mb-1 text-2xl font-semibold tracking-tight text-gray-900">
@@ -42,7 +53,7 @@ export default async function HomePage() {
         <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {cars.map((car, i) => (
             <li key={car.id}>
-              <CarCard car={car} priority={i < 3} />
+              <CarCard car={car} priority={i < 3} userBusyRanges={userBusyRanges} />
             </li>
           ))}
         </ul>

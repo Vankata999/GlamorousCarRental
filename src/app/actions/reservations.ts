@@ -49,6 +49,14 @@ export async function createReservation(
       });
       if (clash) throw new Error("CONFLICT");
 
+      // A person can only rent one car at a time: reject if this user already
+      // has any reservation overlapping the requested range.
+      const userClash = await tx.reservation.findFirst({
+        where: { userId, startDate: { lte: end }, endDate: { gte: start } },
+        select: { id: true },
+      });
+      if (userClash) throw new Error("USER_CONFLICT");
+
       const p = priceFor(carId, start, end);
       await tx.reservation.create({
         data: { userId, carId, startDate: start, endDate: end, price: p },
@@ -64,6 +72,11 @@ export async function createReservation(
       return {
         ok: false,
         error: "Those dates are no longer available. Please pick another range.",
+      };
+    if (error instanceof Error && error.message === "USER_CONFLICT")
+      return {
+        ok: false,
+        error: "You already have a reservation during these dates.",
       };
     if (error instanceof Error && error.message === "CAR_NOT_FOUND")
       return { ok: false, error: "That car no longer exists." };
